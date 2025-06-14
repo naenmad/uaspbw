@@ -1,100 +1,100 @@
-# 🔐 TUGAS ANGGOTA 1: AUTHENTICATION & USER MANAGEMENT
+# 🔐 TUGAS ANGGOTA 1: AUTENTIKASI & MANAJEMEN PENGGUNA
 
 **Nama:** [Isi nama anggota]  
-**Tanggung Jawab:** Sistem Login, Register, User Management, Security  
+**Tanggung Jawab:** Sistem Login, Register, Manajemen Pengguna, Keamanan  
 **Deadline:** [Isi deadline]  
 
 ---
 
-## 🎯 OBJECTIVES
+## 🎯 TUJUAN
 
-Mengintegrasikan sistem authentication yang sudah ada (tampilan statis) dengan database dan menambahkan fitur user management lengkap.
+Mengintegrasikan sistem autentikasi yang sudah ada (tampilan statis) dengan database dan menambahkan fitur manajemen pengguna lengkap.
 
 ---
 
-## 📋 TASK CHECKLIST
+## 📋 DAFTAR TUGAS
 
-### **Phase 1: Understanding & Setup (Week 1)**
-- [ ] Setup development environment (XAMPP/Laragon)
-- [ ] Run database setup: `http://localhost/uaspbw/setup/`
-- [ ] Study existing files: `auth/login.php`, `auth/register.php`
-- [ ] Study database schema: `users` table in `database/schema.sql`
-- [ ] Test current login/register pages (note: currently static)
+### **Fase 1: Pemahaman & Setup (Minggu 1)**
+- [ ] Setup environment pengembangan (XAMPP/Laragon)
+- [ ] Jalankan setup database: `http://localhost/uaspbw/setup/`
+- [ ] Pelajari file yang ada: `auth/login.php`, `auth/register.php`
+- [ ] Pelajari skema database: tabel `users` di `database/schema.sql`
+- [ ] Test halaman login/register saat ini (catatan: masih statis)
 
-### **Phase 2: Database Integration (Week 2-3)**
+### **Fase 2: Integrasi Database (Minggu 2-3)**
 - [ ] **Update `auth/login.php`:**
-  - [ ] Connect to database using `config/database.php`
-  - [ ] Validate username/email and password against `users` table
-  - [ ] Implement password verification (bcrypt)
-  - [ ] Set session variables on successful login
-  - [ ] Redirect to dashboard after login
-  - [ ] Show error messages for invalid credentials
+  - [ ] Hubungkan ke database menggunakan `config/database.php`
+  - [ ] Validasi username/email dan password terhadap tabel `users`
+  - [ ] Implementasi verifikasi password (bcrypt)
+  - [ ] Set variabel session saat login berhasil
+  - [ ] Redirect ke dashboard setelah login
+  - [ ] Tampilkan pesan error untuk kredensial tidak valid
 
 - [ ] **Update `auth/register.php`:**
-  - [ ] Form validation (required fields, email format, password strength)
-  - [ ] Check if username/email already exists
-  - [ ] Hash password before storing (password_hash())
-  - [ ] Insert new user to database
-  - [ ] Auto-login after successful registration
-  - [ ] Show success/error messages
+  - [ ] Validasi form (field wajib, format email, kekuatan password)
+  - [ ] Cek apakah username/email sudah ada
+  - [ ] Hash password sebelum disimpan (password_hash())
+  - [ ] Insert pengguna baru ke database
+  - [ ] Auto-login setelah registrasi berhasil
+  - [ ] Tampilkan pesan sukses/error
 
-### **Phase 3: Session Management (Week 3)**
-- [ ] **Create `config/auth.php`:**
-  - [ ] `login_user($username, $password)` function
-  - [ ] `register_user($data)` function
-  - [ ] `logout_user()` function
-  - [ ] `is_logged_in()` function
-  - [ ] `get_current_user()` function
-  - [ ] `check_user_role($required_role)` function
+### **Fase 3: Manajemen Session (Minggu 3)**
+- [ ] **Buat `config/auth.php`:**
+  - [ ] Fungsi `login_user($username, $password)`
+  - [ ] Fungsi `register_user($data)`
+  - [ ] Fungsi `logout_user()`
+  - [ ] Fungsi `is_logged_in()`
+  - [ ] Fungsi `get_current_user()`
+  - [ ] Fungsi `check_user_role($required_role)`
 
-- [ ] **Add session protection to dashboard:**
-  - [ ] Add login check to all dashboard pages
-  - [ ] Redirect to login if not authenticated
-  - [ ] Add logout functionality to user dropdown
+- [ ] **Tambahkan proteksi session ke dashboard:**
+  - [ ] Tambahkan pengecekan login ke semua halaman dashboard
+  - [ ] Redirect ke login jika tidak ter-autentikasi
+  - [ ] Tambahkan fungsi logout ke dropdown user
 
-### **Phase 4: User Profile & Settings (Week 4)**
+### **Fase 4: Profil Pengguna & Pengaturan (Minggu 4)**
 - [ ] **Update `dashboard/settings.php`:**
-  - [ ] Display current user information
-  - [ ] Update profile form (name, email, phone)
-  - [ ] Change password form
-  - [ ] Upload profile picture functionality
-  - [ ] Email change with verification (optional)
+  - [ ] Tampilkan informasi pengguna saat ini
+  - [ ] Form update profil (nama, email, telepon)
+  - [ ] Form ganti password
+  - [ ] Fungsi upload foto profil
+  - [ ] Verifikasi email saat ganti email (opsional)
 
-### **Phase 5: Security & Role Management (Week 5)**
-- [ ] **Security enhancements:**
-  - [ ] CSRF protection for forms
-  - [ ] Rate limiting for login attempts
-  - [ ] Session timeout
-  - [ ] Secure session configuration
-  - [ ] Input sanitization
+### **Fase 5: Keamanan & Manajemen Role (Minggu 5)**
+- [ ] **Peningkatan keamanan:**
+  - [ ] Proteksi CSRF untuk form
+  - [ ] Rate limiting untuk percobaan login
+  - [ ] Timeout session
+  - [ ] Konfigurasi session yang aman
+  - [ ] Sanitasi input
 
-- [ ] **Role-based access (if needed):**
-  - [ ] Admin vs User roles
-  - [ ] Role-based dashboard access
-  - [ ] Admin user management interface
-
----
-
-## 📁 FILES TO WORK WITH
-
-### **Existing Files (Modify):**
-- `auth/login.php` - Add database integration
-- `auth/register.php` - Add database integration  
-- `dashboard/settings.php` - Add user profile management
-- All dashboard pages - Add login protection
-
-### **New Files (Create):**
-- `config/auth.php` - Authentication helper functions
-- `auth/logout.php` - Logout processing
-- `auth/forgot-password.php` - (Optional) Password reset
+- [ ] **Akses berbasis role (jika diperlukan):**
+  - [ ] Role Admin vs User
+  - [ ] Akses dashboard berbasis role
+  - [ ] Interface manajemen pengguna untuk admin
 
 ---
 
-## 🗄️ DATABASE TABLES
+## 📁 FILE YANG DIKERJAKAN
 
-### **Primary Table: `users`**
+### **File yang Ada (Modifikasi):**
+- `auth/login.php` - Tambahkan integrasi database
+- `auth/register.php` - Tambahkan integrasi database  
+- `dashboard/settings.php` - Tambahkan manajemen profil pengguna
+- Semua halaman dashboard - Tambahkan proteksi login
+
+### **File Baru (Buat):**
+- `config/auth.php` - Fungsi helper autentikasi
+- `auth/logout.php` - Proses logout
+- `auth/forgot-password.php` - (Opsional) Reset password
+
+---
+
+## 🗄️ TABEL DATABASE
+
+### **Tabel Utama: `users`**
 ```sql
--- Study this table structure in database/schema.sql
+-- Pelajari struktur tabel ini di database/schema.sql
 users (
     id, username, email, password_hash, 
     full_name, phone, role, 
@@ -104,12 +104,12 @@ users (
 
 ---
 
-## 💻 CODE EXAMPLES
+## 💻 CONTOH KODE
 
-### **Login Processing Example:**
+### **Contoh Proses Login:**
 ```php
 <?php
-// auth/login.php - Add this logic
+// auth/login.php - Tambahkan logika ini
 session_start();
 require_once '../config/database.php';
 require_once '../config/auth.php';
@@ -122,16 +122,16 @@ if ($_POST) {
         header('Location: ../dashboard/');
         exit;
     } else {
-        $error = "Invalid username or password";
+        $error = "Username atau password tidak valid";
     }
 }
 ?>
 ```
 
-### **Auth Helper Function Example:**
+### **Contoh Fungsi Helper Auth:**
 ```php
 <?php
-// config/auth.php - Create this file
+// config/auth.php - Buat file ini
 function login_user($username, $password) {
     global $pdo;
     
@@ -147,8 +147,7 @@ function login_user($username, $password) {
         
         // Update last login
         $update_sql = "UPDATE users SET last_login = NOW() WHERE id = ?";
-        $update_stmt = $pdo->prepare($update_sql);
-        $update_stmt->execute([$user['id']]);
+        $update_stmt = $pdo->prepare($update_sql);        $update_stmt->execute([$user['id']]);
         
         return true;
     }
@@ -159,65 +158,65 @@ function login_user($username, $password) {
 
 ---
 
-## 🧪 TESTING CHECKLIST
+## 🧪 DAFTAR PENGUJIAN
 
-- [ ] Register new user successfully
-- [ ] Login with correct credentials
-- [ ] Login fails with wrong credentials
-- [ ] Session persists across dashboard pages
-- [ ] Logout works correctly
-- [ ] Protected pages redirect to login when not authenticated
-- [ ] Profile update works
-- [ ] Password change works
-- [ ] Duplicate username/email registration prevented
-
----
-
-## 🚨 COMMON ISSUES & SOLUTIONS
-
-### **Issue:** "Headers already sent" error
-**Solution:** Make sure no output (echo, HTML) before `header()` redirects
-
-### **Issue:** Sessions not working
-**Solution:** Ensure `session_start()` is called before any session usage
-
-### **Issue:** Password not matching
-**Solution:** Use `password_hash()` for storing and `password_verify()` for checking
-
-### **Issue:** Database connection error
-**Solution:** Check database credentials in `config/database.php`
+- [ ] Registrasi pengguna baru berhasil
+- [ ] Login dengan kredensial yang benar
+- [ ] Login gagal dengan kredensial salah
+- [ ] Session bertahan di seluruh halaman dashboard
+- [ ] Logout berfungsi dengan benar
+- [ ] Halaman yang dilindungi redirect ke login saat tidak ter-autentikasi
+- [ ] Update profil berfungsi
+- [ ] Ganti password berfungsi
+- [ ] Registrasi dengan username/email duplikat dicegah
 
 ---
 
-## 📚 RESOURCES
+## 🚨 MASALAH UMUM & SOLUSI
 
-- [PHP Sessions Documentation](https://www.php.net/manual/en/book.session.php)
-- [PHP Password Functions](https://www.php.net/manual/en/ref.password.php)
-- [PDO Documentation](https://www.php.net/manual/en/book.pdo.php)
-- [Security Best Practices](https://owasp.org/www-project-top-ten/)
+### **Masalah:** Error "Headers already sent"
+**Solusi:** Pastikan tidak ada output (echo, HTML) sebelum `header()` redirect
+
+### **Masalah:** Session tidak berfungsi
+**Solusi:** Pastikan `session_start()` dipanggil sebelum penggunaan session
+
+### **Masalah:** Password tidak cocok
+**Solusi:** Gunakan `password_hash()` untuk menyimpan dan `password_verify()` untuk mengecek
+
+### **Masalah:** Error koneksi database
+**Solusi:** Periksa kredensial database di `config/database.php`
 
 ---
 
-## 📞 HELP & SUPPORT
+## 📚 SUMBER REFERENSI
+
+- [Dokumentasi PHP Sessions](https://www.php.net/manual/en/book.session.php)
+- [Fungsi Password PHP](https://www.php.net/manual/en/ref.password.php)
+- [Dokumentasi PDO](https://www.php.net/manual/en/book.pdo.php)
+- [Best Practices Keamanan](https://owasp.org/www-project-top-ten/)
+
+---
+
+## 📞 BANTUAN & DUKUNGAN
 
 **Jika mengalami kesulitan:**
-1. Cek database schema di `database/README.md`
-2. Test database connection di `setup/index.php`
-3. Konsultasi dengan Anggota 5 (Database Integration)
+1. Cek skema database di `database/README.md`
+2. Test koneksi database di `setup/index.php`
+3. Konsultasi dengan Anggota 5 (Integrasi Database)
 4. Tanya di group chat kelompok
 
-**Files yang saling berkaitan:**
-- Anggota 5: Database functions (`includes/db-functions.php`)
-- Anggota 6: UI improvements dan security measures
-- Semua anggota: Session protection di halaman masing-masing
+**File yang saling berkaitan:**
+- Anggota 5: Fungsi database (`includes/db-functions.php`)
+- Anggota 6: Perbaikan UI dan langkah keamanan
+- Semua anggota: Proteksi session di halaman masing-masing
 
 ---
 
-**Success Criteria:**
-✅ User dapat register dan login dengan database  
-✅ Session management berfungsi sempurna  
-✅ Dashboard protected dari akses tanpa login  
-✅ User dapat update profile di settings  
-✅ Security measures implemented  
+**Kriteria Sukses:**
+✅ Pengguna dapat register dan login dengan database  
+✅ Manajemen session berfungsi sempurna  
+✅ Dashboard terlindungi dari akses tanpa login  
+✅ Pengguna dapat update profil di pengaturan  
+✅ Langkah keamanan terimplementasi  
 
-**Good luck! 🚀**
+**Semoga berhasil! 🚀**
