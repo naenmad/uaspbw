@@ -1,3 +1,85 @@
+<?php
+// Settings Page with Authentication and Profile Management
+session_start();
+require_once '../config/database.php';
+require_once '../config/auth.php';
+
+// Require user to be logged in
+require_login();
+
+// Get current user data
+$current_user = get_logged_in_user();
+$user_id = $current_user['id'];
+
+$success_message = '';
+$error_message = '';
+
+// Handle profile update
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['update_profile'])) {
+        $csrf_token = $_POST['csrf_token'] ?? '';
+
+        if (!verify_csrf_token($csrf_token)) {
+            $error_message = 'Token keamanan tidak valid.';
+        } else {
+            $profile_data = [
+                'full_name' => trim($_POST['full_name'] ?? ''),
+                'email' => trim($_POST['email'] ?? ''),
+                'phone' => trim($_POST['phone'] ?? ''),
+                'address' => trim($_POST['address'] ?? '')
+            ];
+
+            $update_result = update_user_profile($user_id, $profile_data);
+
+            if ($update_result['success']) {
+                $success_message = $update_result['message'];                // Refresh current user data
+                $current_user = get_logged_in_user();
+            } else {
+                $error_message = $update_result['message'];
+            }
+        }
+    }
+
+    // Handle password change
+    if (isset($_POST['change_password'])) {
+        $csrf_token = $_POST['csrf_token_password'] ?? '';
+
+        if (!verify_csrf_token($csrf_token)) {
+            $error_message = 'Token keamanan tidak valid.';
+        } else {
+            $current_password = $_POST['current_password'] ?? '';
+            $new_password = $_POST['new_password'] ?? '';
+            $confirm_password = $_POST['confirm_password'] ?? '';
+
+            if ($new_password !== $confirm_password) {
+                $error_message = 'Konfirmasi password baru tidak cocok!';
+            } else {
+                $password_result = change_user_password($user_id, $current_password, $new_password);
+
+                if ($password_result['success']) {
+                    $success_message = $password_result['message'];
+                } else {
+                    $error_message = $password_result['message'];
+                }
+            }
+        }
+    }
+}
+
+// Get updated user info from database
+try {
+    $sql = "SELECT * FROM users WHERE id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$user_id]);
+    $user_info = $stmt->fetch(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $error_message = 'Gagal memuat data pengguna.';
+    $user_info = $current_user;
+}
+
+// Generate CSRF tokens
+$csrf_token = generate_csrf_token();
+?>
 <!DOCTYPE html>
 <html lang="id">
 
@@ -78,6 +160,11 @@
         .sidebar-nav a.active {
             background-color: #007bff;
             color: white;
+        }
+
+        .sidebar-nav a.text-danger:hover {
+            background-color: #dc3545;
+            color: white !important;
         }
 
         .card {
@@ -248,6 +335,13 @@
                     Pengaturan
                 </a>
             </li>
+            <li>
+                <a href="../auth/logout.php" class="text-danger"
+                    onclick="return confirm('Apakah Anda yakin ingin logout?')">
+                    <i class="bi bi-box-arrow-right me-2"></i>
+                    Logout
+                </a>
+            </li>
         </ul>
     </div>
 
@@ -257,14 +351,19 @@
             <button class="btn btn-outline-secondary d-md-none" type="button" onclick="toggleSidebar()">
                 <i class="bi bi-list"></i>
             </button>
-
             <div class="navbar-nav ms-auto">
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle me-1"></i>
-                        Admin User
+                        <?php echo htmlspecialchars($current_user['full_name']); ?>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
+                        <li class="dropdown-header">
+                            <small class="text-muted"><?php echo htmlspecialchars($current_user['email']); ?></small>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li><a class="dropdown-item" href="settings.php"><i class="bi bi-person me-2"></i>Profile</a>
                         </li>
                         <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a>
@@ -272,7 +371,7 @@
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="../auth/login.php"><i
+                        <li><a class="dropdown-item" href="../auth/logout.php"><i
                                     class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </div>
@@ -335,8 +434,7 @@
 
                 <!-- Settings Content -->
                 <div class="col-lg-9">
-                    <div class="tab-content" id="settingsTabContent">
-                        <!-- Profile Settings -->
+                    <div class="tab-content" id="settingsTabContent"> <!-- Profile Settings -->
                         <div class="tab-pane fade show active" id="profile" role="tabpanel">
                             <div class="card">
                                 <div class="card-header">
@@ -346,25 +444,48 @@
                                     </h5>
                                 </div>
                                 <div class="card-body">
+                                    <?php if ($success_message): ?>
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <i class="bi bi-check-circle me-2"></i>
+                                            <?php echo htmlspecialchars($success_message); ?>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if ($error_message): ?>
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                            <?php echo htmlspecialchars($error_message); ?>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    <?php endif; ?>
+
                                     <div class="text-center mb-4">
                                         <div class="profile-avatar">
-                                            AU
+                                            <?php echo strtoupper(substr($user_info['full_name'], 0, 1)); ?>
                                         </div>
                                         <button class="btn btn-outline-primary btn-sm">
                                             <i class="bi bi-camera me-1"></i>
                                             Ubah Foto
                                         </button>
                                     </div>
+                                    <form method="POST" action="" name="update_profile">
+                                        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                                        <input type="hidden" name="update_profile" value="1">
 
-                                    <form id="profileForm">
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Nama Lengkap</label>
-                                                <input type="text" class="form-control" value="Admin User" required>
+                                                <label class="form-label">Nama Lengkap <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" name="full_name" class="form-control"
+                                                    value="<?php echo htmlspecialchars($user_info['full_name']); ?>"
+                                                    required>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Email</label>
-                                                <input type="email" class="form-control" value="admin@orderSystem.com"
+                                                <label class="form-label">Email <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="email" name="email" class="form-control"
+                                                    value="<?php echo htmlspecialchars($user_info['email']); ?>"
                                                     required>
                                             </div>
                                         </div>
@@ -372,18 +493,22 @@
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Nomor Telepon</label>
-                                                <input type="tel" class="form-control" value="+62 812 3456 7890">
+                                                <input type="tel" name="phone" class="form-control"
+                                                    value="<?php echo htmlspecialchars($user_info['phone'] ?? ''); ?>">
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Posisi</label>
-                                                <input type="text" class="form-control" value="Administrator">
+                                                <label class="form-label">Username</label>
+                                                <input type="text" class="form-control"
+                                                    value="<?php echo htmlspecialchars($user_info['username']); ?>"
+                                                    readonly disabled>
+                                                <small class="text-muted">Username tidak dapat diubah</small>
                                             </div>
                                         </div>
 
                                         <div class="mb-3">
                                             <label class="form-label">Alamat</label>
-                                            <textarea class="form-control"
-                                                rows="3">Jl. Contoh No. 123, Jakarta</textarea>
+                                            <textarea name="address" class="form-control"
+                                                rows="3"><?php echo htmlspecialchars($user_info['address'] ?? ''); ?></textarea>
                                         </div>
 
                                         <div class="text-end">
@@ -395,9 +520,7 @@
                                     </form>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Security Settings -->
+                        </div> <!-- Security Settings -->
                         <div class="tab-pane fade" id="security" role="tabpanel">
                             <div class="card">
                                 <div class="card-header">
@@ -407,22 +530,48 @@
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    <form id="securityForm">
+                                    <?php if ($success_message): ?>
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <i class="bi bi-check-circle me-2"></i>
+                                            <?php echo htmlspecialchars($success_message); ?>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if ($error_message): ?>
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                            <?php echo htmlspecialchars($error_message); ?>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    <?php endif; ?>
+                                    <form method="POST" action="" name="change_password">
+                                        <input type="hidden" name="csrf_token_password"
+                                            value="<?php echo $csrf_token; ?>">
+                                        <input type="hidden" name="change_password" value="1">
+
                                         <h6 class="mb-3">Ubah Password</h6>
 
                                         <div class="mb-3">
-                                            <label class="form-label">Password Lama</label>
-                                            <input type="password" class="form-control" required>
+                                            <label class="form-label">Password Lama <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="password" name="current_password" class="form-control"
+                                                required>
                                         </div>
 
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Password Baru</label>
-                                                <input type="password" class="form-control" required>
+                                                <label class="form-label">Password Baru <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="password" name="new_password" class="form-control"
+                                                    minlength="6" required>
+                                                <small class="text-muted">Minimal 6 karakter</small>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Konfirmasi Password Baru</label>
-                                                <input type="password" class="form-control" required>
+                                                <label class="form-label">Konfirmasi Password Baru <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="password" name="confirm_password" class="form-control"
+                                                    minlength="6" required>
                                             </div>
                                         </div>
 
@@ -651,7 +800,6 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
         // Toggle sidebar for mobile
         function toggleSidebar() {
@@ -659,20 +807,79 @@
             sidebar.classList.toggle('show');
         }
 
-        // Form submissions
-        document.getElementById('profileForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            alert('Profil berhasil diperbarui!');
-        });
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function () {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
 
-        document.getElementById('securityForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            alert('Password berhasil diubah!');
-        });
+        // Form validation
+        document.addEventListener('DOMContentLoaded', function () {
+            // Profile form validation
+            const profileForm = document.querySelector('form[name="update_profile"]');
+            if (profileForm) {
+                profileForm.addEventListener('submit', function (e) {
+                    const fullName = profileForm.querySelector('input[name="full_name"]');
+                    const email = profileForm.querySelector('input[name="email"]');
 
-        document.getElementById('systemForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            alert('Pengaturan sistem berhasil disimpan!');
+                    if (fullName.value.trim().length < 2) {
+                        e.preventDefault();
+                        alert('Nama lengkap minimal 2 karakter!');
+                        fullName.focus();
+                        return false;
+                    }
+
+                    // Simple email validation
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email.value)) {
+                        e.preventDefault();
+                        alert('Format email tidak valid!');
+                        email.focus();
+                        return false;
+                    }
+                });
+            }
+
+            // Password form validation
+            const passwordForm = document.querySelector('form[name="change_password"]');
+            if (passwordForm) {
+                passwordForm.addEventListener('submit', function (e) {
+                    const currentPassword = passwordForm.querySelector('input[name="current_password"]');
+                    const newPassword = passwordForm.querySelector('input[name="new_password"]');
+                    const confirmPassword = passwordForm.querySelector('input[name="confirm_password"]');
+
+                    if (currentPassword.value.length < 1) {
+                        e.preventDefault();
+                        alert('Password lama harus diisi!');
+                        currentPassword.focus();
+                        return false;
+                    }
+
+                    if (newPassword.value.length < 6) {
+                        e.preventDefault();
+                        alert('Password baru minimal 6 karakter!');
+                        newPassword.focus();
+                        return false;
+                    }
+
+                    if (newPassword.value !== confirmPassword.value) {
+                        e.preventDefault();
+                        alert('Password baru dan konfirmasi password tidak cocok!');
+                        confirmPassword.focus();
+                        return false;
+                    }
+
+                    if (currentPassword.value === newPassword.value) {
+                        e.preventDefault();
+                        alert('Password baru harus berbeda dari password lama!');
+                        newPassword.focus();
+                        return false;
+                    }
+                });
+            }
         });
     </script>
 </body>

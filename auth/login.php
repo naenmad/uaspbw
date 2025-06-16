@@ -1,3 +1,79 @@
+<?php
+// Process login form
+session_start();
+require_once '../config/database.php';
+require_once '../config/auth.php';
+
+$error_message = '';
+$success_message = '';
+
+// Handle logout message
+if (isset($_GET['message'])) {
+    switch ($_GET['message']) {
+        case 'logout_success':
+            $success_message = 'Anda telah berhasil logout!';
+            break;
+        case 'logout_error':
+            $error_message = 'Terjadi kesalahan saat logout.';
+            break;
+        case 'session_expired':
+            $error_message = 'Session Anda telah berakhir. Silakan login kembali.';
+            break;
+        case 'access_denied':
+            $error_message = 'Akses ditolak. Silakan login terlebih dahulu.';
+            break;
+    }
+}
+
+// Check if user is already logged in
+if (is_logged_in()) {
+    header('Location: ../dashboard/index.php');
+    exit();
+}
+
+// Process login form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrf_token = $_POST['csrf_token'] ?? '';
+
+    // Verify CSRF token
+    if (!verify_csrf_token($csrf_token)) {
+        $error_message = 'Token keamanan tidak valid. Silakan refresh halaman.';
+    } else {
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $remember = isset($_POST['remember']);
+
+        if (empty($email) || empty($password)) {
+            $error_message = 'Email dan password wajib diisi!';
+        } else {
+            $login_result = login_user($email, $password);
+
+            if ($login_result['success']) {
+                // Set remember me cookie if requested
+                if ($remember) {
+                    $remember_token = generate_remember_token();
+                    setcookie('remember_token', $remember_token, time() + (30 * 24 * 60 * 60), '/'); // 30 days
+
+                    // Save remember token to database
+                    $update_sql = "UPDATE users SET remember_token = ? WHERE id = ?";
+                    $stmt = $pdo->prepare($update_sql);
+                    $stmt->execute([$remember_token, $_SESSION['user_id']]);
+                }
+
+                $success_message = $login_result['message'];
+
+                // Redirect after short delay
+                header('refresh:2;url=../dashboard/index.php');
+            } else {
+                $error_message = $login_result['message'];
+            }
+        }
+    }
+}
+
+// Generate CSRF token
+$csrf_token = generate_csrf_token();
+?>
 <!DOCTYPE html>
 <html lang="id">
 
@@ -106,17 +182,31 @@
                     ← Kembali ke Beranda
                 </a>
             </div>
-
             <h2 class="text-center">Masuk</h2>
 
-            <!-- Alert placeholder untuk pesan error/success -->
-            <div id="alert-container"></div>
+            <!-- Display success/error messages -->
+            <?php if (!empty($error_message)): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <?php echo htmlspecialchars($error_message); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($success_message)): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <?php echo htmlspecialchars($success_message); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
 
             <form id="loginForm" method="POST" action="">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="Masukkan email Anda"
-                        required>
+                    <label for="email" class="form-label">Email atau Username</label>
+                    <input type="text" class="form-control" id="email" name="email"
+                        placeholder="Masukkan email atau username Anda"
+                        value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
                 </div>
 
                 <div class="mb-3">
@@ -158,54 +248,48 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        // Simple form validation
+        // Enhanced form validation
         document.getElementById('loginForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
-            // Simple validation
+            // Basic validation
             if (!email || !password) {
+                e.preventDefault();
                 showAlert('Mohon lengkapi semua field!', 'danger');
-                return;
+                return false;
             }
 
-            if (!isValidEmail(email)) {
-                showAlert('Format email tidak valid!', 'danger');
-                return;
-            }
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+            submitBtn.disabled = true;
 
-            // Simulate login process
-            showAlert('Sedang memproses login...', 'info');
-
-            // Here you would normally send data to server
-            // For now, just show success message
+            // Re-enable button after 5 seconds (in case of network issues)
             setTimeout(() => {
-                showAlert('Login berhasil! Mengalihkan ke dashboard...', 'success');
-                // Redirect to dashboard after 2 seconds
-                setTimeout(() => {
-                    window.location.href = '../dashboard/index.php';
-                }, 2000);
-            }, 1000);
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 5000);
         });
 
         function showAlert(message, type) {
-            const alertContainer = document.getElementById('alert-container');
-            alertContainer.innerHTML = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
+            // This function is kept for potential client-side validation
+            // Server-side validation is now primary
+            console.log(`${type}: ${message}`);
         }
 
-        function isValidEmail(email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
-        }
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                if (alert.classList.contains('alert-success')) {
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 300);
+                }
+            });
+        }, 5000);
     </script>
 </body>
 

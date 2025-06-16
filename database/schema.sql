@@ -5,9 +5,6 @@
 CREATE DATABASE IF NOT EXISTS uaspbw_db;
 USE uaspbw_db;
 
--- ========================================
--- 1. USERS TABLE (for authentication)
--- ========================================
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,

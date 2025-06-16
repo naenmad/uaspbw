@@ -1,3 +1,15 @@
+<?php
+// Add Order Page with Authentication
+session_start();
+require_once '../config/database.php';
+require_once '../config/auth.php';
+
+// Require user to be logged in
+require_login();
+
+// Get current user data
+$current_user = get_logged_in_user();
+?>
 <!DOCTYPE html>
 <html lang="id">
 
@@ -78,6 +90,11 @@
         .sidebar-nav a.active {
             background-color: #007bff;
             color: white;
+        }
+
+        .sidebar-nav a.text-danger:hover {
+            background-color: #dc3545;
+            color: white !important;
         }
 
         .card {
@@ -183,6 +200,13 @@
                     Pengaturan
                 </a>
             </li>
+            <li>
+                <a href="../auth/logout.php" class="text-danger"
+                    onclick="return confirm('Apakah Anda yakin ingin logout?')">
+                    <i class="bi bi-box-arrow-right me-2"></i>
+                    Logout
+                </a>
+            </li>
         </ul>
     </div>
 
@@ -192,14 +216,19 @@
             <button class="btn btn-outline-secondary d-md-none" type="button" onclick="toggleSidebar()">
                 <i class="bi bi-list"></i>
             </button>
-
             <div class="navbar-nav ms-auto">
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle me-1"></i>
-                        Admin User
+                        <?php echo htmlspecialchars($current_user['full_name']); ?>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
+                        <li class="dropdown-header">
+                            <small class="text-muted"><?php echo htmlspecialchars($current_user['email']); ?></small>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li><a class="dropdown-item" href="settings.php"><i class="bi bi-person me-2"></i>Profile</a>
                         </li>
                         <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a>
@@ -207,7 +236,7 @@
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="../auth/login.php"><i
+                        <li><a class="dropdown-item" href="../auth/logout.php"><i
                                     class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </div>

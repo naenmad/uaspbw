@@ -1,3 +1,21 @@
+<?php
+// Dashboard - Main Page with Authentication
+session_start();
+require_once '../config/database.php';
+require_once '../config/auth.php';
+
+// Require user to be logged in
+require_login();
+
+// Get current user data
+$current_user = get_logged_in_user();
+
+// Get dashboard statistics (placeholder - will be replaced with real data later)
+$total_orders = 15; // This will be replaced with database query
+$total_customers = 8; // This will be replaced with database query  
+$monthly_revenue = 12500000; // This will be replaced with database query
+$pending_orders = 3; // This will be replaced with database query
+?>
 <!DOCTYPE html>
 <html lang="id">
 
@@ -78,6 +96,11 @@
         .sidebar-nav a.active {
             background-color: #007bff;
             color: white;
+        }
+
+        .sidebar-nav a.text-danger:hover {
+            background-color: #dc3545;
+            color: white !important;
         }
 
         .card {
@@ -220,6 +243,13 @@
                     Pengaturan
                 </a>
             </li>
+            <li>
+                <a href="../auth/logout.php" class="text-danger"
+                    onclick="return confirm('Apakah Anda yakin ingin logout?')">
+                    <i class="bi bi-box-arrow-right me-2"></i>
+                    Logout
+                </a>
+            </li>
         </ul>
     </div>
 
@@ -229,14 +259,19 @@
             <button class="btn btn-outline-secondary d-md-none" type="button" onclick="toggleSidebar()">
                 <i class="bi bi-list"></i>
             </button>
-
             <div class="navbar-nav ms-auto">
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle me-1"></i>
-                        Admin User
+                        <?php echo htmlspecialchars($current_user['full_name']); ?>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
+                        <li class="dropdown-header">
+                            <small class="text-muted"><?php echo htmlspecialchars($current_user['email']); ?></small>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li><a class="dropdown-item" href="settings.php"><i class="bi bi-person me-2"></i>Profile</a>
                         </li>
                         <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a>
@@ -244,7 +279,7 @@
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="../auth/login.php"><i
+                        <li><a class="dropdown-item" href="../auth/logout.php"><i
                                     class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </div>
@@ -260,8 +295,17 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title mb-1">Selamat Datang di Dashboard!</h4>
+                            <h4 class="card-title mb-1">Selamat Datang,
+                                <?php echo htmlspecialchars($current_user['full_name']); ?>!
+                            </h4>
                             <p class="text-muted mb-0">Kelola semua order dan pelanggan Anda dengan mudah</p>
+                            <small class="text-muted">
+                                <i class="bi bi-person-badge me-1"></i>
+                                Login sebagai: <?php echo ucfirst($current_user['role']); ?>
+                                <?php if (isset($_SESSION['login_time'])): ?>
+                                    | Login: <?php echo date('d/m/Y H:i', $_SESSION['login_time']); ?>
+                                <?php endif; ?>
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -275,7 +319,7 @@
                             <div class="stats-icon bg-primary-custom">
                                 <i class="bi bi-cart-plus"></i>
                             </div>
-                            <div class="stats-number">156</div>
+                            <div class="stats-number"><?php echo number_format($total_orders); ?></div>
                             <div class="stats-label">Total Order</div>
                         </div>
                     </div>
@@ -287,7 +331,8 @@
                             <div class="stats-icon bg-success-custom">
                                 <i class="bi bi-check-circle"></i>
                             </div>
-                            <div class="stats-number">89</div>
+                            <div class="stats-number"><?php echo number_format($total_orders - $pending_orders); ?>
+                            </div>
                             <div class="stats-label">Order Selesai</div>
                         </div>
                     </div>
@@ -299,7 +344,7 @@
                             <div class="stats-icon bg-warning-custom">
                                 <i class="bi bi-clock"></i>
                             </div>
-                            <div class="stats-number">23</div>
+                            <div class="stats-number"><?php echo number_format($pending_orders); ?></div>
                             <div class="stats-label">Order Pending</div>
                         </div>
                     </div>
@@ -311,7 +356,7 @@
                             <div class="stats-icon bg-danger-custom">
                                 <i class="bi bi-people"></i>
                             </div>
-                            <div class="stats-number">45</div>
+                            <div class="stats-number"><?php echo number_format($total_customers); ?></div>
                             <div class="stats-label">Total Pelanggan</div>
                         </div>
                     </div>
