@@ -500,3 +500,4 @@ $monthly_sales = $monthly_sales_result->fetchAll();
 </body>
 
 </html>
+ 
