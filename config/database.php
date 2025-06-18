@@ -7,13 +7,22 @@ $database = 'uaspbw_db';
 $charset = 'utf8mb4';
 
 // PDO options
+// $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 $options = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES => false,
+    PDO::ATTR_EMULATE_PREPARES   => false,
     PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$charset}"
 ];
 
+// if (!isset($pdo)) {
+//     try {
+//         $pdo = new PDO($dsn, $user, $pass, $options);
+//     } catch (PDOException $e) {
+//         error_log("Database Connection Error: " . $e->getMessage());
+//         die("Koneksi database gagal.");
+//     }
+// }
 try {
     $dsn = "mysql:host={$host};dbname={$database};charset={$charset}";
     $pdo = new PDO($dsn, $username, $password, $options);
@@ -60,17 +69,16 @@ function getCurrentUser()
 function logActivity($action, $model = null, $model_id = null, $description = null)
 {
     global $pdo;
-
-    if (!isLoggedIn())
-        return;
-
+    
+    if (!isLoggedIn()) return;
+    
     $user_id = $_SESSION['user_id'];
     $ip_address = $_SERVER['REMOTE_ADDR'] ?? null;
     $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? null;
-
+    
     $sql = "INSERT INTO activity_logs (user_id, action, model, model_id, description, ip_address, user_agent) 
             VALUES (?, ?, ?, ?, ?, ?, ?)";
-
+    
     try {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$user_id, $action, $model, $model_id, $description, $ip_address, $user_agent]);
@@ -83,24 +91,24 @@ function logActivity($action, $model = null, $model_id = null, $description = nu
 function getSystemSetting($key, $default = null)
 {
     global $pdo;
-
+    
     $sql = "SELECT setting_value, setting_type FROM system_settings WHERE setting_key = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$key]);
     $result = $stmt->fetch();
-
+    
     if (!$result) {
         return $default;
     }
-
+    
     $value = $result['setting_value'];
-
+    
     // Convert based on type
     switch ($result['setting_type']) {
         case 'boolean':
             return filter_var($value, FILTER_VALIDATE_BOOLEAN);
         case 'number':
-            return is_numeric($value) ? (float) $value : $default;
+            return is_numeric($value) ? (float)$value : $default;
         case 'json':
             return json_decode($value, true) ?: $default;
         default:
@@ -112,7 +120,7 @@ function getSystemSetting($key, $default = null)
 function generateOrderNumber()
 {
     global $pdo;
-
+    
     try {
         $stmt = $pdo->prepare("CALL GetNextOrderNumber()");
         $stmt->execute();
@@ -138,7 +146,7 @@ function formatCurrency($amount, $currency = null)
     if ($currency === null) {
         $currency = getSystemSetting('default_currency', 'IDR');
     }
-
+    
     switch ($currency) {
         case 'IDR':
             return 'Rp ' . number_format($amount, 0, ',', '.');
