@@ -9,7 +9,35 @@ require_login();
 
 // Get current user data
 $current_user = get_logged_in_user();
+
+// Get total revenue
+$total_revenue_sql = "SELECT SUM(total_amount) as total_revenue FROM orders WHERE status != 'cancelled'";
+$total_revenue_result = $pdo->query($total_revenue_sql);
+$total_revenue = $total_revenue_result->fetchColumn() ?: 0;
+
+// Get total orders
+$total_orders_sql = "SELECT COUNT(*) as total_orders FROM orders WHERE status != 'cancelled'";
+$total_orders_result = $pdo->query($total_orders_sql);
+$total_orders = $total_orders_result->fetchColumn() ?: 0;
+
+// Get order status distribution
+$order_status_sql = "SELECT status, COUNT(*) as count FROM orders GROUP BY status";
+$order_status_result = $pdo->query($order_status_sql);
+$order_status_data = $order_status_result->fetchAll();
+
+// Get monthly sales data
+$monthly_sales_sql = "SELECT 
+                            YEAR(order_date) as year,
+                            MONTH(order_date) as month,
+                            SUM(total_amount) as total_revenue
+                        FROM orders
+                        WHERE status != 'cancelled'
+                        GROUP BY YEAR(order_date), MONTH(order_date)
+                        ORDER BY year DESC, month DESC";
+$monthly_sales_result = $pdo->query($monthly_sales_sql);
+$monthly_sales = $monthly_sales_result->fetchAll();
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 
@@ -332,7 +360,7 @@ $current_user = get_logged_in_user();
                             <div class="stats-icon" style="background: linear-gradient(45deg, #007bff, #0056b3);">
                                 <i class="bi bi-currency-dollar"></i>
                             </div>
-                            <div class="stats-number">Rp 2.4M</div>
+                            <div class="stats-number">Rp <?php echo number_format($total_revenue, 2, ',', '.'); ?></div>
                             <div class="stats-label">Total Pendapatan</div>
                             <small class="text-success">
                                 <i class="bi bi-arrow-up"></i> +12% dari periode sebelumnya
@@ -347,40 +375,10 @@ $current_user = get_logged_in_user();
                             <div class="stats-icon" style="background: linear-gradient(45deg, #28a745, #1e7e34);">
                                 <i class="bi bi-cart-check"></i>
                             </div>
-                            <div class="stats-number">156</div>
+                            <div class="stats-number"><?php echo $total_orders; ?></div>
                             <div class="stats-label">Total Order</div>
                             <small class="text-success">
                                 <i class="bi bi-arrow-up"></i> +8% dari periode sebelumnya
-                            </small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-3 col-md-6">
-                    <div class="card">
-                        <div class="stats-card">
-                            <div class="stats-icon" style="background: linear-gradient(45deg, #ffc107, #e0a800);">
-                                <i class="bi bi-graph-up"></i>
-                            </div>
-                            <div class="stats-number">Rp 15.4K</div>
-                            <div class="stats-label">Rata-rata Order</div>
-                            <small class="text-success">
-                                <i class="bi bi-arrow-up"></i> +5% dari periode sebelumnya
-                            </small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-3 col-md-6">
-                    <div class="card">
-                        <div class="stats-card">
-                            <div class="stats-icon" style="background: linear-gradient(45deg, #dc3545, #c82333);">
-                                <i class="bi bi-people"></i>
-                            </div>
-                            <div class="stats-number">45</div>
-                            <div class="stats-label">Pelanggan Aktif</div>
-                            <small class="text-success">
-                                <i class="bi bi-arrow-up"></i> +3 pelanggan baru
                             </small>
                         </div>
                     </div>
@@ -424,126 +422,6 @@ $current_user = get_logged_in_user();
                 </div>
             </div>
 
-            <!-- Detailed Reports -->
-            <div class="row">
-                <!-- Top Products -->
-                <div class="col-xl-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-trophy me-2"></i>
-                                Produk Terlaris
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Produk</th>
-                                            <th>Qty</th>
-                                            <th>Pendapatan</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>
-                                                <strong>Laptop Gaming</strong><br>
-                                                <small class="text-muted">Elektronik</small>
-                                            </td>
-                                            <td><span class="badge bg-primary">25</span></td>
-                                            <td><strong>Rp 750,000</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <strong>Smartphone</strong><br>
-                                                <small class="text-muted">Elektronik</small>
-                                            </td>
-                                            <td><span class="badge bg-primary">18</span></td>
-                                            <td><strong>Rp 540,000</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <strong>Sepatu Sneakers</strong><br>
-                                                <small class="text-muted">Fashion</small>
-                                            </td>
-                                            <td><span class="badge bg-primary">32</span></td>
-                                            <td><strong>Rp 480,000</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <strong>Tas Kulit</strong><br>
-                                                <small class="text-muted">Fashion</small>
-                                            </td>
-                                            <td><span class="badge bg-primary">15</span></td>
-                                            <td><strong>Rp 375,000</strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Top Customers -->
-                <div class="col-xl-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="bi bi-star me-2"></i>
-                                Pelanggan Terbaik
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Pelanggan</th>
-                                            <th>Order</th>
-                                            <th>Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>
-                                                <strong>John Doe</strong><br>
-                                                <small class="text-muted">john@email.com</small>
-                                            </td>
-                                            <td><span class="badge bg-success">8</span></td>
-                                            <td><strong>Rp 450,000</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <strong>Jane Smith</strong><br>
-                                                <small class="text-muted">jane@email.com</small>
-                                            </td>
-                                            <td><span class="badge bg-success">6</span></td>
-                                            <td><strong>Rp 380,000</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <strong>Michael Johnson</strong><br>
-                                                <small class="text-muted">michael@email.com</small>
-                                            </td>
-                                            <td><span class="badge bg-success">5</span></td>
-                                            <td><strong>Rp 275,000</strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <strong>Sarah Wilson</strong><br>
-                                                <small class="text-muted">sarah@email.com</small>
-                                            </td>
-                                            <td><span class="badge bg-success">4</span></td>
-                                            <td><strong>Rp 220,000</strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -551,12 +429,6 @@ $current_user = get_logged_in_user();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Toggle sidebar for mobile
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('show');
-        }
-
         // Initialize charts
         let revenueChart;
         let statusChart;
@@ -571,10 +443,10 @@ $current_user = get_logged_in_user();
             revenueChart = new Chart(revenueCtx, {
                 type: 'line',
                 data: {
-                    labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                    labels: <?php echo json_encode(array_map(function($sales) { return $sales['month'] . '/' . $sales['year']; }, $monthly_sales)); ?>,
                     datasets: [{
                         label: 'Pendapatan',
-                        data: [320000, 450000, 380000, 620000, 540000, 780000, 690000],
+                        data: <?php echo json_encode(array_column($monthly_sales, 'total_revenue')); ?>,
                         borderColor: '#007bff',
                         backgroundColor: 'rgba(0, 123, 255, 0.1)',
                         tension: 0.4,
@@ -593,8 +465,8 @@ $current_user = get_logged_in_user();
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                callback: function (value) {
-                                    return 'Rp ' + (value / 1000) + 'K';
+                                callback: function(value) {
+                                    return 'Rp ' + value.toLocaleString();
                                 }
                             }
                         }
@@ -607,15 +479,10 @@ $current_user = get_logged_in_user();
             statusChart = new Chart(statusCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Selesai', 'Proses', 'Pending', 'Dibatal'],
+                    labels: <?php echo json_encode(array_map(function($status) { return ucfirst($status['status']); }, $order_status_data)); ?>,
                     datasets: [{
-                        data: [89, 23, 25, 19],
-                        backgroundColor: [
-                            '#28a745',
-                            '#007bff',
-                            '#ffc107',
-                            '#dc3545'
-                        ]
+                        data: <?php echo json_encode(array_column($order_status_data, 'count')); ?>,
+                        backgroundColor: ['#28a745', '#007bff', '#ffc107', '#dc3545']
                     }]
                 },
                 options: {
@@ -628,74 +495,6 @@ $current_user = get_logged_in_user();
                     }
                 }
             });
-        }
-
-        // Update reports based on period selection
-        function updateReports() {
-            const period = document.getElementById('periodFilter').value;
-            const dateFrom = document.getElementById('dateFrom');
-            const dateTo = document.getElementById('dateTo');
-
-            const today = new Date();
-
-            switch (period) {
-                case 'today':
-                    dateFrom.value = today.toISOString().split('T')[0];
-                    dateTo.value = today.toISOString().split('T')[0];
-                    break;
-                case 'week':
-                    const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
-                    dateFrom.value = weekStart.toISOString().split('T')[0];
-                    dateTo.value = new Date().toISOString().split('T')[0];
-                    break;
-                case 'month':
-                    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-                    dateFrom.value = monthStart.toISOString().split('T')[0];
-                    dateTo.value = new Date().toISOString().split('T')[0];
-                    break;
-                case 'year':
-                    const yearStart = new Date(today.getFullYear(), 0, 1);
-                    dateFrom.value = yearStart.toISOString().split('T')[0];
-                    dateTo.value = new Date().toISOString().split('T')[0];
-                    break;
-            }
-
-            if (period !== 'custom') {
-                generateReport();
-            }
-        }
-
-        // Generate report
-        function generateReport() {
-            const dateFrom = document.getElementById('dateFrom').value;
-            const dateTo = document.getElementById('dateTo').value;
-
-            if (!dateFrom || !dateTo) {
-                alert('Mohon pilih rentang tanggal!');
-                return;
-            }
-
-            if (new Date(dateFrom) > new Date(dateTo)) {
-                alert('Tanggal mulai tidak boleh lebih besar dari tanggal akhir!');
-                return;
-            }
-
-            // Show loading state
-            console.log(`Generating report from ${dateFrom} to ${dateTo}`);
-
-            // In real application, you would fetch new data here
-            // and update the charts and tables
-            alert('Report berhasil diperbarui!');
-        }
-
-        // Export report
-        function exportReport(format) {
-            const dateFrom = document.getElementById('dateFrom').value;
-            const dateTo = document.getElementById('dateTo').value;
-
-            alert(`Mengekspor laporan periode ${dateFrom} - ${dateTo} ke format ${format.toUpperCase()}`);
-
-            // In real application, this would generate and download the file
         }
     </script>
 </body>
