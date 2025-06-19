@@ -9,6 +9,125 @@ require_login();
 
 // Get current user data
 $current_user = get_logged_in_user();
+
+// Helper function for status badge
+function getStatusBadgeClass($status)
+{
+    switch (strtolower($status)) {
+        case 'pending':
+            return 'bg-warning';
+        case 'confirmed':
+            return 'bg-info';
+        case 'processing':
+            return 'bg-primary';
+        case 'shipped':
+            return 'bg-info';
+        case 'delivered':
+            return 'bg-success';
+        case 'completed':
+            return 'bg-success';
+        case 'cancelled':
+            return 'bg-danger';
+        default:
+            return 'bg-secondary';
+    }
+}
+
+// Handle POST actions (delete, bulk actions)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+
+    try {
+        if ($action === 'delete_order') {
+            $order_id = $_POST['order_id'];
+
+            // Delete order items first
+            $stmt = $pdo->prepare("DELETE FROM order_items WHERE order_id = ?");
+            $stmt->execute([$order_id]);
+
+            // Delete order
+            $stmt = $pdo->prepare("DELETE FROM orders WHERE id = ?");
+            $stmt->execute([$order_id]);
+
+            $_SESSION['success_message'] = "Order berhasil dihapus.";
+        }
+
+    } catch (PDOException $e) {
+        $_SESSION['error_message'] = "Error: " . $e->getMessage();
+    }
+
+    // Redirect to avoid form resubmission
+    header("Location: orders.php");
+    exit();
+}
+
+// Pagination and filtering
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+$items_per_page = 10;
+$offset = ($page - 1) * $items_per_page;
+
+$search_term = $_GET['search'] ?? '';
+$status_filter = $_GET['status'] ?? '';
+$date_from = $_GET['date_from'] ?? '';
+$date_to = $_GET['date_to'] ?? '';
+
+// Build query
+$base_query = "FROM orders o LEFT JOIN customers c ON o.customer_id = c.id WHERE 1=1";
+$params = [];
+
+if (!empty($search_term)) {
+    $base_query .= " AND (o.order_number LIKE ? OR c.name LIKE ?)";
+    $params[] = "%$search_term%";
+    $params[] = "%$search_term%";
+}
+
+if (!empty($status_filter)) {
+    $base_query .= " AND o.status = ?";
+    $params[] = $status_filter;
+}
+
+if (!empty($date_from)) {
+    $base_query .= " AND o.order_date >= ?";
+    $params[] = $date_from;
+}
+
+if (!empty($date_to)) {
+    $base_query .= " AND o.order_date <= ?";
+    $params[] = $date_to;
+}
+
+// Get total count
+$total_query = "SELECT COUNT(o.id) " . $base_query;
+$stmt_total = $pdo->prepare($total_query);
+$stmt_total->execute($params);
+$total_orders = $stmt_total->fetchColumn();
+$total_pages = ceil($total_orders / $items_per_page);
+
+// Get orders data
+$data_query = "SELECT o.*, c.name as customer_name, 
+               (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) as total_items " .
+    $base_query . " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
+
+$stmt_data = $pdo->prepare($data_query);
+
+// Bind parameters
+$param_index = 1;
+foreach ($params as $param) {
+    $stmt_data->bindValue($param_index++, $param);
+}
+$stmt_data->bindValue($param_index++, $items_per_page, PDO::PARAM_INT);
+$stmt_data->bindValue($param_index, $offset, PDO::PARAM_INT);
+
+$stmt_data->execute();
+$orders = $stmt_data->fetchAll(PDO::FETCH_ASSOC);
+
+// Get statistics
+$stats = [
+    'total' => $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn(),
+    'pending' => $pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'pending'")->fetchColumn(),
+    'processing' => $pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'processing'")->fetchColumn(),
+    'completed' => $pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'completed'")->fetchColumn()
+];
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -354,141 +473,51 @@ $current_user = get_logged_in_user();
                                         </tr>
                                     </thead>
                                     <tbody id="ordersTableBody">
-                                        <tr>
-                                            <td><input type="checkbox" class="form-check-input order-checkbox"></td>
-                                            <td><strong>#ORD-001</strong></td>
-                                            <td>
-                                                <div>
-                                                    <strong>John Doe</strong><br>
-                                                    <small class="text-muted">john@email.com</small>
-                                                </div>
-                                            </td>
-                                            <td>14 Jun 2025</td>
-                                            <td><strong>Rp 150,000</strong></td>
-                                            <td><span class="badge bg-success badge-status">Selesai</span></td>
-                                            <td>
-                                                <button class="btn btn-info btn-action" title="Lihat Detail"
-                                                    onclick="viewOrder('ORD-001')">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-action" title="Edit"
-                                                    onclick="editOrder('ORD-001')">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-danger btn-action" title="Hapus"
-                                                    onclick="deleteOrder('ORD-001')">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td><input type="checkbox" class="form-check-input order-checkbox"></td>
-                                            <td><strong>#ORD-002</strong></td>
-                                            <td>
-                                                <div>
-                                                    <strong>Jane Smith</strong><br>
-                                                    <small class="text-muted">jane@email.com</small>
-                                                </div>
-                                            </td>
-                                            <td>13 Jun 2025</td>
-                                            <td><strong>Rp 200,000</strong></td>
-                                            <td><span class="badge bg-warning badge-status">Pending</span></td>
-                                            <td>
-                                                <button class="btn btn-info btn-action" title="Lihat Detail"
-                                                    onclick="viewOrder('ORD-002')">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-action" title="Edit"
-                                                    onclick="editOrder('ORD-002')">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-danger btn-action" title="Hapus"
-                                                    onclick="deleteOrder('ORD-002')">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td><input type="checkbox" class="form-check-input order-checkbox"></td>
-                                            <td><strong>#ORD-003</strong></td>
-                                            <td>
-                                                <div>
-                                                    <strong>Michael Johnson</strong><br>
-                                                    <small class="text-muted">michael@email.com</small>
-                                                </div>
-                                            </td>
-                                            <td>13 Jun 2025</td>
-                                            <td><strong>Rp 75,000</strong></td>
-                                            <td><span class="badge bg-primary badge-status">Proses</span></td>
-                                            <td>
-                                                <button class="btn btn-info btn-action" title="Lihat Detail"
-                                                    onclick="viewOrder('ORD-003')">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-action" title="Edit"
-                                                    onclick="editOrder('ORD-003')">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-danger btn-action" title="Hapus"
-                                                    onclick="deleteOrder('ORD-003')">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td><input type="checkbox" class="form-check-input order-checkbox"></td>
-                                            <td><strong>#ORD-004</strong></td>
-                                            <td>
-                                                <div>
-                                                    <strong>Sarah Wilson</strong><br>
-                                                    <small class="text-muted">sarah@email.com</small>
-                                                </div>
-                                            </td>
-                                            <td>12 Jun 2025</td>
-                                            <td><strong>Rp 120,000</strong></td>
-                                            <td><span class="badge bg-success badge-status">Selesai</span></td>
-                                            <td>
-                                                <button class="btn btn-info btn-action" title="Lihat Detail"
-                                                    onclick="viewOrder('ORD-004')">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-action" title="Edit"
-                                                    onclick="editOrder('ORD-004')">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-danger btn-action" title="Hapus"
-                                                    onclick="deleteOrder('ORD-004')">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td><input type="checkbox" class="form-check-input order-checkbox"></td>
-                                            <td><strong>#ORD-005</strong></td>
-                                            <td>
-                                                <div>
-                                                    <strong>David Brown</strong><br>
-                                                    <small class="text-muted">david@email.com</small>
-                                                </div>
-                                            </td>
-                                            <td>12 Jun 2025</td>
-                                            <td><strong>Rp 300,000</strong></td>
-                                            <td><span class="badge bg-danger badge-status">Dibatal</span></td>
-                                            <td>
-                                                <button class="btn btn-info btn-action" title="Lihat Detail"
-                                                    onclick="viewOrder('ORD-005')">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-action" title="Edit"
-                                                    onclick="editOrder('ORD-005')">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-danger btn-action" title="Hapus"
-                                                    onclick="deleteOrder('ORD-005')">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
+                                        <?php if (empty($orders)): ?>
+                                            <tr>
+                                                <td colspan="7" class="text-center">Tidak ada order ditemukan</td>
+                                            </tr>
+                                        <?php else: ?>
+                                            <?php foreach ($orders as $order): ?>
+                                                <tr>
+                                                    <td><input type="checkbox" class="form-check-input order-checkbox"
+                                                            value="<?= $order['id'] ?>"></td>
+                                                    <td><strong>#<?= htmlspecialchars($order['order_number'] ?? 'ORD' . str_pad($order['id'], 3, '0', STR_PAD_LEFT)) ?></strong>
+                                                    </td>
+                                                    <td>
+                                                        <div>
+                                                            <strong><?= htmlspecialchars($order['customer_name'] ?? 'Unknown Customer') ?></strong><br>
+                                                            <small class="text-muted"><?= $order['total_items'] ?? 0 ?>
+                                                                item(s)</small>
+                                                        </div>
+                                                    </td>
+                                                    <td><?= date('d M Y', strtotime($order['order_date'])) ?></td>
+                                                    <td><strong>Rp
+                                                            <?= number_format($order['total_amount'], 0, ',', '.') ?></strong>
+                                                    </td>
+                                                    <td>
+                                                        <span
+                                                            class="badge <?= getStatusBadgeClass($order['status']) ?> badge-status">
+                                                            <?= ucfirst($order['status']) ?>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-info btn-action" title="Lihat Detail"
+                                                            onclick="viewOrder('<?= htmlspecialchars($order['order_number'] ?? $order['id']) ?>')">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-warning btn-action" title="Edit"
+                                                            onclick="editOrder('<?= htmlspecialchars($order['order_number'] ?? $order['id']) ?>')">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button class="btn btn-danger btn-action" title="Hapus"
+                                                            onclick="deleteOrder('<?= $order['id'] ?>')">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>

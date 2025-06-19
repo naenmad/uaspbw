@@ -97,7 +97,7 @@ CREATE TABLE orders (
 CREATE TABLE order_items (
     id INT PRIMARY KEY AUTO_INCREMENT,
     order_id INT NOT NULL,
-    product_id INT NOT NULL,
+    product_id INT NULL, -- Made nullable for manual product entries
     product_name VARCHAR(100) NOT NULL, -- Store name for historical data
     quantity INT NOT NULL DEFAULT 1,
     unit_price DECIMAL(15,2) NOT NULL,

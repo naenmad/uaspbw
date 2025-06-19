@@ -10,11 +10,73 @@ require_login();
 // Get current user data
 $current_user = get_logged_in_user();
 
-// Get dashboard statistics (placeholder - will be replaced with real data later)
-$total_orders = 15; // This will be replaced with database query
-$total_customers = 8; // This will be replaced with database query  
-$monthly_revenue = 12500000; // This will be replaced with database query
-$pending_orders = 3; // This will be replaced with database query
+// Helper function for status badge
+function getStatusBadgeClass($status)
+{
+    switch (strtolower($status)) {
+        case 'pending':
+            return 'bg-warning';
+        case 'confirmed':
+            return 'bg-info';
+        case 'processing':
+            return 'bg-primary';
+        case 'shipped':
+            return 'bg-info';
+        case 'delivered':
+            return 'bg-success';
+        case 'completed':
+            return 'bg-success';
+        case 'cancelled':
+            return 'bg-danger';
+        default:
+            return 'bg-secondary';
+    }
+}
+
+// Get dashboard statistics from database
+try {
+    // Total orders
+    $stmt = $pdo->query("SELECT COUNT(*) FROM orders");
+    $total_orders = $stmt->fetchColumn() ?: 0;
+
+    // Total customers
+    $stmt = $pdo->query("SELECT COUNT(*) FROM customers");
+    $total_customers = $stmt->fetchColumn() ?: 0;
+
+    // Monthly revenue (current month)
+    $stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders 
+                         WHERE MONTH(order_date) = MONTH(CURRENT_DATE()) 
+                         AND YEAR(order_date) = YEAR(CURRENT_DATE())
+                         AND status != 'cancelled'");
+    $monthly_revenue = $stmt->fetchColumn() ?: 0;
+    // Pending orders
+    $stmt = $pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'pending'");
+    $pending_orders = $stmt->fetchColumn() ?: 0;
+    // Recent orders (last 5 orders)
+    $stmt = $pdo->query("SELECT o.id, o.order_number, o.order_date, o.total_amount, o.status, c.name as customer_name
+                         FROM orders o 
+                         LEFT JOIN customers c ON o.customer_id = c.id 
+                         ORDER BY o.created_at DESC 
+                         LIMIT 5");
+    $recent_orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Recent activities (activity logs)
+    $stmt = $pdo->query("SELECT al.*, u.full_name as user_name 
+                         FROM activity_logs al 
+                         LEFT JOIN users u ON al.user_id = u.id 
+                         ORDER BY al.created_at DESC 
+                         LIMIT 5");
+    $recent_activities = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (PDOException $e) {
+    // Fallback to placeholder data if database query fails
+    $total_orders = 0;
+    $total_customers = 0;
+    $monthly_revenue = 0;
+    $pending_orders = 0;
+    $recent_orders = [];
+    $recent_activities = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -172,6 +234,17 @@ $pending_orders = 3; // This will be replaced with database query
             font-size: 12px;
             border-radius: 5px;
             margin: 0 2px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-action:active {
+            transform: translateY(0);
         }
 
         @media (max-width: 768px) {
@@ -388,81 +461,38 @@ $pending_orders = 3; // This will be replaced with database query
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>#ORD-001</td>
-                                            <td>John Doe</td>
-                                            <td>13 Jun 2025</td>
-                                            <td>Rp 150,000</td>
-                                            <td><span class="badge bg-success badge-status">Selesai</span></td>
-                                            <td>
-                                                <button class="btn btn-info btn-action" title="Lihat">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-action" title="Edit">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#ORD-002</td>
-                                            <td>Jane Smith</td>
-                                            <td>12 Jun 2025</td>
-                                            <td>Rp 200,000</td>
-                                            <td><span class="badge bg-warning badge-status">Pending</span></td>
-                                            <td>
-                                                <button class="btn btn-info btn-action" title="Lihat">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-action" title="Edit">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#ORD-003</td>
-                                            <td>Michael Johnson</td>
-                                            <td>12 Jun 2025</td>
-                                            <td>Rp 75,000</td>
-                                            <td><span class="badge bg-primary badge-status">Proses</span></td>
-                                            <td>
-                                                <button class="btn btn-info btn-action" title="Lihat">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-action" title="Edit">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#ORD-004</td>
-                                            <td>Sarah Wilson</td>
-                                            <td>11 Jun 2025</td>
-                                            <td>Rp 120,000</td>
-                                            <td><span class="badge bg-success badge-status">Selesai</span></td>
-                                            <td>
-                                                <button class="btn btn-info btn-action" title="Lihat">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-action" title="Edit">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#ORD-005</td>
-                                            <td>David Brown</td>
-                                            <td>11 Jun 2025</td>
-                                            <td>Rp 300,000</td>
-                                            <td><span class="badge bg-warning badge-status">Pending</span></td>
-                                            <td>
-                                                <button class="btn btn-info btn-action" title="Lihat">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-action" title="Edit">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
+                                        <?php if (empty($recent_orders)): ?>
+                                            <tr>
+                                                <td colspan="6" class="text-center">Belum ada order</td>
+                                            </tr>
+                                        <?php else: ?>
+                                            <?php foreach ($recent_orders as $order): ?>
+                                                <tr>
+                                                    <td>#<?= htmlspecialchars($order['order_number'] ?? 'ORD' . str_pad($order['id'], 3, '0', STR_PAD_LEFT)) ?>
+                                                    </td>
+                                                    <td><?= htmlspecialchars($order['customer_name'] ?? 'Unknown Customer') ?>
+                                                    </td>
+                                                    <td><?= date('d M Y', strtotime($order['order_date'])) ?></td>
+                                                    <td>Rp <?= number_format($order['total_amount'], 0, ',', '.') ?></td>
+                                                    <td>
+                                                        <span
+                                                            class="badge <?= getStatusBadgeClass($order['status']) ?> badge-status">
+                                                            <?= ucfirst($order['status']) ?>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-info btn-action" title="Lihat"
+                                                            onclick="viewOrder('<?= htmlspecialchars($order['order_number'] ?? $order['id']) ?>')">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-warning btn-action" title="Edit"
+                                                            onclick="editOrder('<?= htmlspecialchars($order['order_number'] ?? $order['id']) ?>')">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -503,41 +533,49 @@ $pending_orders = 3; // This will be replaced with database query
                             <h5 class="card-title mb-0">Aktivitas Terbaru</h5>
                         </div>
                         <div class="card-body">
-                            <div class="activity-item mb-3">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="bi bi-check-circle text-success"></i>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <p class="mb-1"><strong>Order #ORD-001</strong> telah diselesaikan</p>
-                                        <small class="text-muted">2 jam yang lalu</small>
-                                    </div>
+                            <?php if (empty($recent_activities)): ?>
+                                <div class="text-center text-muted">
+                                    <i class="bi bi-clock-history mb-2" style="font-size: 2rem;"></i>
+                                    <p>Belum ada aktivitas</p>
                                 </div>
-                            </div>
-
-                            <div class="activity-item mb-3">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="bi bi-person-plus text-primary"></i>
+                            <?php else: ?>
+                                <?php foreach ($recent_activities as $activity): ?>
+                                    <div class="activity-item mb-3">
+                                        <div class="d-flex">
+                                            <div class="flex-shrink-0">
+                                                <?php
+                                                $icon = 'bi-info-circle';
+                                                $color = 'text-info';
+                                                switch (strtolower($activity['action'])) {
+                                                    case 'create':
+                                                        $icon = 'bi-plus-circle';
+                                                        $color = 'text-success';
+                                                        break;
+                                                    case 'update':
+                                                        $icon = 'bi-pencil-circle';
+                                                        $color = 'text-warning';
+                                                        break;
+                                                    case 'delete':
+                                                        $icon = 'bi-trash-circle';
+                                                        $color = 'text-danger';
+                                                        break;
+                                                }
+                                                ?>
+                                                <i class="bi <?= $icon ?> <?= $color ?>"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <p class="mb-1">
+                                                    <?= htmlspecialchars($activity['description'] ?? $activity['action'] . ' ' . $activity['model']) ?>
+                                                </p>
+                                                <small class="text-muted">
+                                                    <?= htmlspecialchars($activity['user_name'] ?? 'System') ?> •
+                                                    <?= date('d M Y H:i', strtotime($activity['created_at'])) ?>
+                                                </small>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <p class="mb-1">Pelanggan baru <strong>John Doe</strong> terdaftar</p>
-                                        <small class="text-muted">4 jam yang lalu</small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="activity-item">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="bi bi-cart-plus text-warning"></i>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <p class="mb-1">Order baru <strong>#ORD-002</strong> dibuat</p>
-                                        <small class="text-muted">6 jam yang lalu</small>
-                                    </div>
-                                </div>
-                            </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -572,13 +610,22 @@ $pending_orders = 3; // This will be replaced with database query
         }
 
         // Update stats every 30 seconds
-        setInterval(updateStats, 30000);
-
-        // Initialize tooltips
+        setInterval(updateStats, 30000);        // Initialize tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
+        });        // Order action functions
+        function viewOrder(orderId) {
+            // Redirect to order detail page
+            window.location.href = `order-detail.php?id=${orderId}`;
+        }
+
+        function editOrder(orderId) {
+            // Show confirmation and redirect to edit page
+            if (confirm(`Edit order ${orderId}?\n\nNote: Ini akan membuka halaman edit order.`)) {
+                window.location.href = `edit-order.php?id=${orderId}`;
+            }
+        }
     </script>
 </body>
 
