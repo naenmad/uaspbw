@@ -121,7 +121,7 @@ try {
             padding: 20px;
         }
 
-        .navbar-custom {
+        .navbar-custom:not(.mobile-only-navbar) {
             background: white;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             margin-left: 250px;
@@ -550,7 +550,7 @@ try {
             .navbar-custom:not(.mobile-only-navbar) {
                 display: none !important;
             }
-            
+
             .mobile-only-navbar {
                 display: block !important;
             }
@@ -615,7 +615,7 @@ try {
                 </a>
             </li>
         </ul>
-    </div>    <!-- Top Navbar -->
+    </div> <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light navbar-custom">
         <div class="container-fluid">
             <!-- User dropdown - ONLY content in desktop -->
@@ -633,12 +633,15 @@ try {
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-person me-2"></i>Profile</a></li>
-                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-person me-2"></i>Profile</a>
+                        </li>
+                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a>
+                        </li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="../auth/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        <li><a class="dropdown-item" href="../auth/logout.php"><i
+                                    class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </div>
             </div>
@@ -665,12 +668,15 @@ try {
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-person me-2"></i>Profile</a></li>
-                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-person me-2"></i>Profile</a>
+                        </li>
+                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a>
+                        </li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="../auth/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        <li><a class="dropdown-item" href="../auth/logout.php"><i
+                                    class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </div>
             </div>
