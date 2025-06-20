@@ -50,6 +50,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$order_id]);
 
             $_SESSION['success_message'] = "Order berhasil dihapus.";
+
+        } elseif ($action === 'bulk_delete') {
+            $order_ids = json_decode($_POST['order_ids'], true);
+
+            if (is_array($order_ids) && !empty($order_ids)) {
+                $placeholders = str_repeat('?,', count($order_ids) - 1) . '?';
+
+                // Delete order items first
+                $stmt = $pdo->prepare("DELETE FROM order_items WHERE order_id IN ($placeholders)");
+                $stmt->execute($order_ids);
+
+                // Delete orders
+                $stmt = $pdo->prepare("DELETE FROM orders WHERE id IN ($placeholders)");
+                $stmt->execute($order_ids);
+
+                $_SESSION['success_message'] = "Berhasil menghapus " . count($order_ids) . " order.";
+            }
+
+        } elseif ($action === 'bulk_update_status') {
+            $order_ids = json_decode($_POST['order_ids'], true);
+            $new_status = $_POST['new_status'];
+
+            if (is_array($order_ids) && !empty($order_ids) && !empty($new_status)) {
+                $placeholders = str_repeat('?,', count($order_ids) - 1) . '?';
+                $params = array_merge([$new_status], $order_ids);
+
+                $stmt = $pdo->prepare("UPDATE orders SET status = ?, updated_at = NOW() WHERE id IN ($placeholders)");
+                $stmt->execute($params);
+
+                $_SESSION['success_message'] = "Berhasil mengupdate status " . count($order_ids) . " order ke " . ucfirst($new_status) . ".";
+            }
         }
 
     } catch (PDOException $e) {
@@ -371,11 +402,28 @@ $stats = [
                 </div>
             </div>
         </div>
-    </nav>
-
-    <!-- Main Content -->
+    </nav> <!-- Main Content -->
     <div class="main-content">
         <div class="content-wrapper">
+            <!-- Alert Messages -->
+            <?php if (isset($_SESSION['success_message'])): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <?= htmlspecialchars($_SESSION['success_message']) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <?php unset($_SESSION['success_message']); ?>
+            <?php endif; ?>
+
+            <?php if (isset($_SESSION['error_message'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    <?= htmlspecialchars($_SESSION['error_message']) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <?php unset($_SESSION['error_message']); ?>
+            <?php endif; ?>
+
             <!-- Page Header -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -510,6 +558,10 @@ $stats = [
                                                             onclick="editOrder('<?= htmlspecialchars($order['order_number'] ?? $order['id']) ?>')">
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
+                                                        <button class="btn btn-success btn-action" title="Update Status"
+                                                            onclick="updateOrderStatus('<?= $order['id'] ?>', '<?= htmlspecialchars($order['status']) ?>')">
+                                                            <i class="bi bi-arrow-repeat"></i>
+                                                        </button>
                                                         <button class="btn btn-danger btn-action" title="Hapus"
                                                             onclick="deleteOrder('<?= $order['id'] ?>')">
                                                             <i class="bi bi-trash"></i>
@@ -604,36 +656,74 @@ $stats = [
                 bulkDeleteBtn.disabled = true;
                 bulkStatusBtn.disabled = true;
             }
-        }
-
-        // View order details
+        }        // View order details
         function viewOrder(orderId) {
-            alert(`Melihat detail order ${orderId}`);
-            // In real application, this would open a modal or navigate to detail page
+            // Navigate to order detail page
+            window.location.href = `order-detail.php?id=${orderId}`;
         }
 
         // Edit order
         function editOrder(orderId) {
-            alert(`Mengedit order ${orderId}`);
-            // In real application, this would navigate to edit page
-        }
-
-        // Delete order
+            // Navigate to edit order page
+            window.location.href = `edit-order.php?id=${orderId}`;
+        }        // Delete order
         function deleteOrder(orderId) {
-            if (confirm(`Yakin ingin menghapus order ${orderId}?`)) {
-                alert(`Order ${orderId} berhasil dihapus!`);
-                // In real application, this would send delete request to server
-            }
-        }
+            if (confirm(`Yakin ingin menghapus order ${orderId}? Tindakan ini tidak dapat dibatalkan.`)) {
+                // Clear unsaved changes flag
+                clearUnsavedChanges();
 
-        // Bulk delete
+                // Create form and submit for deletion
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'orders.php';
+
+                const actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'action';
+                actionInput.value = 'delete_order';
+
+                const orderIdInput = document.createElement('input');
+                orderIdInput.type = 'hidden';
+                orderIdInput.name = 'order_id';
+                orderIdInput.value = orderId;
+
+                form.appendChild(actionInput);
+                form.appendChild(orderIdInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }        // Bulk delete
         function bulkDelete() {
             const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
             if (checkedBoxes.length > 0) {
-                if (confirm(`Yakin ingin menghapus ${checkedBoxes.length} order terpilih?`)) {
-                    alert(`${checkedBoxes.length} order berhasil dihapus!`);
-                    // In real application, this would send bulk delete request
+                if (confirm(`Yakin ingin menghapus ${checkedBoxes.length} order terpilih? Tindakan ini tidak dapat dibatalkan.`)) {
+                    const orderIds = Array.from(checkedBoxes).map(cb => cb.value);
+
+                    // Clear unsaved changes flag
+                    clearUnsavedChanges();
+
+                    // Create form for bulk delete
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'orders.php';
+
+                    const actionInput = document.createElement('input');
+                    actionInput.type = 'hidden';
+                    actionInput.name = 'action';
+                    actionInput.value = 'bulk_delete';
+
+                    const orderIdsInput = document.createElement('input');
+                    orderIdsInput.type = 'hidden';
+                    orderIdsInput.name = 'order_ids';
+                    orderIdsInput.value = JSON.stringify(orderIds);
+
+                    form.appendChild(actionInput);
+                    form.appendChild(orderIdsInput);
+                    document.body.appendChild(form);
+                    form.submit();
                 }
+            } else {
+                alert('Pilih minimal satu order untuk dihapus.');
             }
         }
 
@@ -641,12 +731,195 @@ $stats = [
         function bulkUpdateStatus() {
             const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
             if (checkedBoxes.length > 0) {
-                const newStatus = prompt('Masukkan status baru (pending/processing/completed/cancelled):');
-                if (newStatus) {
-                    alert(`Status ${checkedBoxes.length} order berhasil diupdate ke ${newStatus}!`);
-                    // In real application, this would send bulk update request
-                }
+                const statusSelect = document.createElement('select');
+                statusSelect.className = 'form-select';
+                statusSelect.innerHTML = `
+                    <option value="">Pilih Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                `;
+
+                // Create modal for status selection
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.innerHTML = `
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Update Status</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Pilih status baru untuk ${checkedBoxes.length} order terpilih:</p>
+                                <div id="statusSelectContainer"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                <button type="button" class="btn btn-primary" onclick="submitBulkStatusUpdate()">Update Status</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+                document.getElementById('statusSelectContainer').appendChild(statusSelect);
+
+                const bootstrapModal = new bootstrap.Modal(modal);
+                bootstrapModal.show();
+
+                // Store the modal reference for cleanup
+                window.currentStatusModal = {
+                    modal: bootstrapModal,
+                    element: modal,
+                    statusSelect: statusSelect
+                };
+            } else {
+                alert('Pilih minimal satu order untuk diupdate.');
             }
+        }
+
+        // Submit bulk status update
+        function submitBulkStatusUpdate() {
+            const newStatus = window.currentStatusModal.statusSelect.value;
+            if (!newStatus) {
+                alert('Pilih status yang valid.');
+                return;
+            }
+
+            const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+            const orderIds = Array.from(checkedBoxes).map(cb => cb.value);
+
+            // Create form for bulk status update
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'orders.php';
+
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'bulk_update_status';
+
+            const orderIdsInput = document.createElement('input');
+            orderIdsInput.type = 'hidden';
+            orderIdsInput.name = 'order_ids';
+            orderIdsInput.value = JSON.stringify(orderIds);
+
+            const statusInput = document.createElement('input');
+            statusInput.type = 'hidden';
+            statusInput.name = 'new_status';
+            statusInput.value = newStatus;
+
+            form.appendChild(actionInput);
+            form.appendChild(orderIdsInput);
+            form.appendChild(statusInput);
+            document.body.appendChild(form);
+
+            // Hide modal and submit
+            window.currentStatusModal.modal.hide();
+            form.submit();
+        }
+
+        // Cleanup modal after use
+        function cleanupStatusModal() {
+            if (window.currentStatusModal) {
+                document.body.removeChild(window.currentStatusModal.element);
+                window.currentStatusModal = null;
+            }
+        }
+
+        // Event listener untuk cleanup modal saat ditutup
+        document.addEventListener('hidden.bs.modal', function (event) {
+            if (event.target.classList.contains('modal')) {
+                setTimeout(cleanupStatusModal, 100);
+            }
+        });
+
+        // Update order status individually
+        function updateOrderStatus(orderId, currentStatus) {
+            const statusOptions = [
+                { value: 'pending', label: 'Pending' },
+                { value: 'confirmed', label: 'Confirmed' },
+                { value: 'processing', label: 'Processing' },
+                { value: 'shipped', label: 'Shipped' },
+                { value: 'delivered', label: 'Delivered' },
+                { value: 'completed', label: 'Completed' },
+                { value: 'cancelled', label: 'Cancelled' }
+            ];
+
+            let optionsHtml = '';
+            statusOptions.forEach(option => {
+                const selected = option.value === currentStatus ? 'selected' : '';
+                optionsHtml += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+            });
+
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Update Status Order</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Update status untuk order #${orderId}:</p>
+                            <select class="form-select" id="singleStatusSelect">
+                                ${optionsHtml}
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="button" class="btn btn-primary" onclick="submitSingleStatusUpdate(${orderId})">Update Status</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            const bootstrapModal = new bootstrap.Modal(modal);
+            bootstrapModal.show();
+
+            window.currentSingleStatusModal = {
+                modal: bootstrapModal,
+                element: modal
+            };
+        }
+
+        // Submit single status update
+        function submitSingleStatusUpdate(orderId) {
+            const newStatus = document.getElementById('singleStatusSelect').value;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'orders.php';
+
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'bulk_update_status';
+
+            const orderIdsInput = document.createElement('input');
+            orderIdsInput.type = 'hidden';
+            orderIdsInput.name = 'order_ids';
+            orderIdsInput.value = JSON.stringify([orderId.toString()]);
+
+            const statusInput = document.createElement('input');
+            statusInput.type = 'hidden';
+            statusInput.name = 'new_status';
+            statusInput.value = newStatus;
+
+            form.appendChild(actionInput);
+            form.appendChild(orderIdsInput);
+            form.appendChild(statusInput);
+            document.body.appendChild(form);
+
+            window.currentSingleStatusModal.modal.hide();
+            form.submit();
         }
 
         // Reset filters
@@ -705,6 +978,82 @@ $stats = [
                 }
             });
         });
+
+        // Show loading state
+        function showLoading(button) {
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
+            return originalText;
+        }
+
+        // Hide loading state
+        function hideLoading(button, originalText) {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+
+        // Add CSS for spinning animation
+        const style = document.createElement('style');
+        style.textContent = `
+            .spin {
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            .fade-in {
+                animation: fadeIn 0.3s ease-in;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Auto-hide alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function () {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.classList.remove('show');
+                        setTimeout(() => {
+                            if (alert.parentNode) {
+                                alert.parentNode.removeChild(alert);
+                            }
+                        }, 150);
+                    }
+                }, 5000);
+            });
+        });
+
+        // Confirm before leaving page if there are unsaved changes
+        let hasUnsavedChanges = false;
+
+        // Mark as having unsaved changes when checkboxes are checked
+        document.addEventListener('change', function (e) {
+            if (e.target.classList.contains('order-checkbox')) {
+                const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+                hasUnsavedChanges = checkedBoxes.length > 0;
+            }
+        });
+
+        // Warn before leaving if there are checked items
+        window.addEventListener('beforeunload', function (e) {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = 'Ada order yang dipilih tapi belum diproses. Yakin ingin meninggalkan halaman?';
+                return e.returnValue;
+            }
+        });
+
+        // Clear unsaved changes flag when actions are performed
+        function clearUnsavedChanges() {
+            hasUnsavedChanges = false;
+        }
     </script>
 </body>
 

@@ -220,51 +220,6 @@ $csrf_token = generate_csrf_token();
             margin: 0 auto 20px;
         }
 
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked+.slider {
-            background-color: #007bff;
-        }
-
-        input:checked+.slider:before {
-            transform: translateX(26px);
-        }
-
         @media (max-width: 768px) {
             .sidebar {
                 margin-left: -250px;
@@ -394,8 +349,7 @@ $csrf_token = generate_csrf_token();
                 </div>
             </div>
 
-            <div class="row">
-                <!-- Settings Navigation -->
+            <div class="row"> <!-- Settings Navigation -->
                 <div class="col-lg-3">
                     <div class="card">
                         <div class="card-body">
@@ -408,23 +362,10 @@ $csrf_token = generate_csrf_token();
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="security-tab" data-bs-toggle="pill" href="#security"
+                                    <a class="nav-link" id="password-tab" data-bs-toggle="pill" href="#password"
                                         role="tab">
-                                        <i class="bi bi-shield-check me-2"></i>
-                                        Keamanan
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="notifications-tab" data-bs-toggle="pill"
-                                        href="#notifications" role="tab">
-                                        <i class="bi bi-bell me-2"></i>
-                                        Notifikasi
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="system-tab" data-bs-toggle="pill" href="#system" role="tab">
-                                        <i class="bi bi-gear me-2"></i>
-                                        Sistem
+                                        <i class="bi bi-key me-2"></i>
+                                        Password
                                     </a>
                                 </li>
                             </ul>
@@ -459,15 +400,10 @@ $csrf_token = generate_csrf_token();
                                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                         </div>
                                     <?php endif; ?>
-
                                     <div class="text-center mb-4">
                                         <div class="profile-avatar">
                                             <?php echo strtoupper(substr($user_info['full_name'], 0, 1)); ?>
                                         </div>
-                                        <button class="btn btn-outline-primary btn-sm">
-                                            <i class="bi bi-camera me-1"></i>
-                                            Ubah Foto
-                                        </button>
                                     </div>
                                     <form method="POST" action="" name="update_profile">
                                         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
@@ -520,37 +456,20 @@ $csrf_token = generate_csrf_token();
                                     </form>
                                 </div>
                             </div>
-                        </div> <!-- Security Settings -->
-                        <div class="tab-pane fade" id="security" role="tabpanel">
+                        </div> <!-- Security Settings --> <!-- Password Settings -->
+                        <div class="tab-pane fade" id="password" role="tabpanel">
                             <div class="card">
                                 <div class="card-header">
                                     <h5 class="mb-0">
-                                        <i class="bi bi-shield-check me-2"></i>
-                                        Pengaturan Keamanan
+                                        <i class="bi bi-key me-2"></i>
+                                        Ubah Password
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    <?php if ($success_message): ?>
-                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                            <i class="bi bi-check-circle me-2"></i>
-                                            <?php echo htmlspecialchars($success_message); ?>
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <?php if ($error_message): ?>
-                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                            <i class="bi bi-exclamation-triangle me-2"></i>
-                                            <?php echo htmlspecialchars($error_message); ?>
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                        </div>
-                                    <?php endif; ?>
                                     <form method="POST" action="" name="change_password">
                                         <input type="hidden" name="csrf_token_password"
                                             value="<?php echo $csrf_token; ?>">
                                         <input type="hidden" name="change_password" value="1">
-
-                                        <h6 class="mb-3">Ubah Password</h6>
 
                                         <div class="mb-3">
                                             <label class="form-label">Password Lama <span
@@ -579,213 +498,6 @@ $csrf_token = generate_csrf_token();
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="bi bi-key me-1"></i>
                                                 Ubah Password
-                                            </button>
-                                        </div>
-                                    </form>
-
-                                    <hr>
-
-                                    <h6 class="mb-3">Pengaturan Login</h6>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <div>
-                                                    <strong>Two-Factor Authentication</strong><br>
-                                                    <small class="text-muted">Keamanan tambahan saat login</small>
-                                                </div>
-                                                <label class="switch">
-                                                    <input type="checkbox">
-                                                    <span class="slider"></span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <div>
-                                                    <strong>Remember Login</strong><br>
-                                                    <small class="text-muted">Ingat login selama 30 hari</small>
-                                                </div>
-                                                <label class="switch">
-                                                    <input type="checkbox" checked>
-                                                    <span class="slider"></span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Notification Settings -->
-                        <div class="tab-pane fade" id="notifications" role="tabpanel">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">
-                                        <i class="bi bi-bell me-2"></i>
-                                        Pengaturan Notifikasi
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <h6 class="mb-3">Email Notifications</h6>
-
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <div>
-                                                    <strong>Order Baru</strong><br>
-                                                    <small class="text-muted">Notifikasi saat ada order baru</small>
-                                                </div>
-                                                <label class="switch">
-                                                    <input type="checkbox" checked>
-                                                    <span class="slider"></span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <div>
-                                                    <strong>Order Selesai</strong><br>
-                                                    <small class="text-muted">Notifikasi saat order selesai</small>
-                                                </div>
-                                                <label class="switch">
-                                                    <input type="checkbox" checked>
-                                                    <span class="slider"></span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <div>
-                                                    <strong>Pelanggan Baru</strong><br>
-                                                    <small class="text-muted">Notifikasi pelanggan terdaftar</small>
-                                                </div>
-                                                <label class="switch">
-                                                    <input type="checkbox">
-                                                    <span class="slider"></span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <div>
-                                                    <strong>Laporan Harian</strong><br>
-                                                    <small class="text-muted">Summary harian via email</small>
-                                                </div>
-                                                <label class="switch">
-                                                    <input type="checkbox" checked>
-                                                    <span class="slider"></span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <hr>
-
-                                    <h6 class="mb-3">Push Notifications</h6>
-
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <div>
-                                                    <strong>Browser Notifications</strong><br>
-                                                    <small class="text-muted">Notifikasi di browser</small>
-                                                </div>
-                                                <label class="switch">
-                                                    <input type="checkbox" checked>
-                                                    <span class="slider"></span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <div>
-                                                    <strong>Sound Alerts</strong><br>
-                                                    <small class="text-muted">Suara notifikasi</small>
-                                                </div>
-                                                <label class="switch">
-                                                    <input type="checkbox">
-                                                    <span class="slider"></span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- System Settings -->
-                        <div class="tab-pane fade" id="system" role="tabpanel">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">
-                                        <i class="bi bi-gear me-2"></i>
-                                        Pengaturan Sistem
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <form id="systemForm">
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Nama Aplikasi</label>
-                                                <input type="text" class="form-control" value="Sistem Pencatatan Order">
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Timezone</label>
-                                                <select class="form-select">
-                                                    <option value="Asia/Jakarta" selected>Asia/Jakarta (WIB)</option>
-                                                    <option value="Asia/Makassar">Asia/Makassar (WITA)</option>
-                                                    <option value="Asia/Jayapura">Asia/Jayapura (WIT)</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Format Tanggal</label>
-                                                <select class="form-select">
-                                                    <option value="d/m/Y" selected>DD/MM/YYYY</option>
-                                                    <option value="m/d/Y">MM/DD/YYYY</option>
-                                                    <option value="Y-m-d">YYYY-MM-DD</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Mata Uang</label>
-                                                <select class="form-select">
-                                                    <option value="IDR" selected>Indonesian Rupiah (IDR)</option>
-                                                    <option value="USD">US Dollar (USD)</option>
-                                                    <option value="EUR">Euro (EUR)</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Items Per Page</label>
-                                                <select class="form-select">
-                                                    <option value="10">10</option>
-                                                    <option value="25" selected>25</option>
-                                                    <option value="50">50</option>
-                                                    <option value="100">100</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Auto Backup</label>
-                                                <select class="form-select">
-                                                    <option value="daily" selected>Harian</option>
-                                                    <option value="weekly">Mingguan</option>
-                                                    <option value="monthly">Bulanan</option>
-                                                    <option value="disabled">Nonaktif</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="text-end">
-                                            <button type="submit" class="btn btn-primary">
-                                                <i class="bi bi-check me-1"></i>
-                                                Simpan Pengaturan
                                             </button>
                                         </div>
                                     </form>

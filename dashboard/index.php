@@ -96,6 +96,15 @@ try {
         body {
             background-color: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        html,
+        body {
+            width: 100%;
+            max-width: 100vw;
         }
 
         .sidebar {
@@ -118,14 +127,165 @@ try {
             margin-left: 250px;
             position: fixed;
             top: 0;
-            right: 0;
             left: 250px;
             z-index: 999;
             width: calc(100% - 250px);
+            min-height: 60px;
+            max-height: 60px;
+            border: none;
+            outline: none;
+        }
+
+        .navbar-custom::before,
+        .navbar-custom::after {
+            display: none;
+        }
+
+        /* Remove any phantom elements */
+        .navbar-custom>*:empty {
+            display: none !important;
+        }
+
+        .navbar-custom .container-fluid {
+            padding: 0.5rem 1rem;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        /* On desktop, container should only show right content */
+        @media (min-width: 769px) {
+            .navbar-custom .container-fluid {
+                justify-content: flex-end !important;
+                padding-left: 1rem;
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            /* Hide any children that are buttons */
+            .navbar-custom .container-fluid>.btn,
+            .navbar-custom .container-fluid>button {
+                display: none !important;
+                width: 0 !important;
+                height: 0 !important;
+                visibility: hidden !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar-custom .container-fluid {
+                justify-content: space-between;
+                padding: 0.5rem 1rem;
+            }
+        }
+
+        .navbar-custom .dropdown-menu {
+            border: 1px solid #dee2e6;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .navbar-custom .nav-link {
+            color: #495057;
+            padding: 0.5rem 1rem;
+            white-space: nowrap;
+        }
+
+        .navbar-custom .nav-link:hover {
+            color: #007bff;
+        }
+
+        .navbar-custom .navbar-nav {
+            margin-left: auto;
+            margin-right: 0;
+            padding-right: 0;
+        }
+
+        /* Ensure no elements extend beyond navbar */
+        .navbar-custom * {
+            box-sizing: border-box;
+        }
+
+        .navbar-custom .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: auto;
+            transform: none;
+        }
+
+        /* Hide mobile toggle button on desktop - FORCE HIDE */
+        @media (min-width: 769px) {
+
+            .navbar-custom .mobile-toggle,
+            .navbar-custom .btn,
+            .navbar-custom button,
+            .navbar-custom .d-md-none {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                width: 0 !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: 0 !important;
+                position: absolute !important;
+                left: -9999px !important;
+            }
+        }
+
+        /* Force hide ANY button in navbar on desktop */
+        .navbar-custom .btn {
+            display: none !important;
+        }
+
+        .navbar-custom button {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .navbar-custom .mobile-toggle {
+                display: inline-block !important;
+            }
+
+            .navbar-custom .btn {
+                display: inline-block !important;
+            }
+
+            .navbar-custom button {
+                display: inline-block !important;
+            }
+        }
+
+        /* Fix dropdown positioning */
+        .navbar-custom .dropdown-menu {
+            right: 0;
+            left: auto;
+            min-width: 200px;
+        }
+
+        /* Mobile sidebar overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
         }
 
         .content-wrapper {
             margin-top: 80px;
+            padding: 0;
         }
 
         .sidebar-brand {
@@ -247,10 +407,26 @@ try {
             transform: translateY(0);
         }
 
+        /* Remove any gaps or spaces in navbar */
+        .navbar-custom .container-fluid>* {
+            margin: 0;
+        }
+
+        .navbar-custom .container-fluid>.btn:not(:last-child) {
+            margin-right: auto;
+        }
+
+        /* Ensure navbar-nav takes up remaining space correctly */
+        .navbar-custom .navbar-nav.ms-auto {
+            margin-left: auto !important;
+            flex-shrink: 0;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 margin-left: -250px;
                 transition: margin 0.3s ease;
+                z-index: 1001;
             }
 
             .sidebar.show {
@@ -265,12 +441,127 @@ try {
             .navbar-custom {
                 left: 0;
                 width: 100%;
+                max-width: 100vw;
+            }
+
+            .stats-number {
+                font-size: 1.5rem;
+            }
+
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* ULTIMATE FIX: Remove button completely from DOM rendering on desktop */
+        @media (min-width: 769px) {
+            .navbar-custom .btn.d-md-none {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                position: absolute !important;
+                left: -9999px !important;
+                top: -9999px !important;
+                width: 0 !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                background: none !important;
+                z-index: -1 !important;
+            }
+
+            .navbar-custom .container-fluid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        /* Desktop hidden class - absolute hide */
+        .desktop-hidden {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            background: none !important;
+            z-index: -9999 !important;
+        }
+
+        @media (max-width: 768px) {
+            .desktop-hidden {
+                display: inline-block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: relative !important;
+                left: auto !important;
+                top: auto !important;
+                width: auto !important;
+                height: auto !important;
+                z-index: auto !important;
+            }
+        }
+
+        /* Mobile-only navbar */
+        .mobile-only-navbar {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-only-navbar {
+                display: block !important;
+            }
+        }
+
+        /* Mobile-only navbar styling */
+        .mobile-only-navbar {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            width: 100%;
+            min-height: 60px;
+        }
+
+        /* Hide mobile navbar on desktop */
+        @media (min-width: 769px) {
+            .mobile-only-navbar {
+                display: none !important;
+            }
+        }
+
+        /* Desktop navbar - absolutely clean */
+        @media (min-width: 769px) {
+            .navbar-custom:not(.mobile-only-navbar) {
+                display: block !important;
+            }
+        }
+
+        /* Mobile - hide desktop navbar and show mobile navbar */
+        @media (max-width: 768px) {
+            .navbar-custom:not(.mobile-only-navbar) {
+                display: none !important;
+            }
+            
+            .mobile-only-navbar {
+                display: block !important;
             }
         }
     </style>
 </head>
 
 <body>
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
@@ -324,17 +615,14 @@ try {
                 </a>
             </li>
         </ul>
-    </div>
-
-    <!-- Top Navbar -->
+    </div>    <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light navbar-custom">
         <div class="container-fluid">
-            <button class="btn btn-outline-secondary d-md-none" type="button" onclick="toggleSidebar()">
-                <i class="bi bi-list"></i>
-            </button>
+            <!-- User dropdown - ONLY content in desktop -->
             <div class="navbar-nav ms-auto">
                 <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
                         <i class="bi bi-person-circle me-1"></i>
                         <?php echo htmlspecialchars($current_user['full_name']); ?>
                     </a>
@@ -345,15 +633,44 @@ try {
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-person me-2"></i>Profile</a>
+                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a>
+                        <li><a class="dropdown-item" href="../auth/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile-only Navbar - Hidden on desktop -->
+    <nav class="navbar navbar-expand-lg navbar-light navbar-custom d-md-none mobile-only-navbar">
+        <div class="container-fluid">
+            <button class="btn btn-outline-secondary" type="button" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="bi bi-person-circle me-1"></i>
+                        <?php echo htmlspecialchars($current_user['full_name']); ?>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li class="dropdown-header">
+                            <small class="text-muted"><?php echo htmlspecialchars($current_user['email']); ?></small>
                         </li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="../auth/logout.php"><i
-                                    class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li><a class="dropdown-item" href="settings.php"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="../auth/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </div>
             </div>
@@ -586,11 +903,24 @@ try {
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
-        // Toggle sidebar for mobile
+    <script>        // Toggle sidebar for mobile
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('show');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('show');
+                overlay.classList.toggle('show');
+            }
+        }
+
+        // Close sidebar
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
         }
 
         // Close sidebar when clicking outside on mobile
@@ -599,7 +929,7 @@ try {
             const toggleBtn = event.target.closest('.btn');
 
             if (window.innerWidth <= 768 && !sidebar.contains(event.target) && !toggleBtn) {
-                sidebar.classList.remove('show');
+                closeSidebar();
             }
         });
 
@@ -607,14 +937,28 @@ try {
         function updateStats() {
             // This would normally fetch data from server
             console.log('Stats updated');
-        }
+        }        // Update stats every 30 seconds
+        setInterval(updateStats, 30000);        // Initialize dropdowns and tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize all dropdowns
+            var dropdowns = document.querySelectorAll('.dropdown-toggle');
+            dropdowns.forEach(function (dropdown) {
+                new bootstrap.Dropdown(dropdown);
+            });
 
-        // Update stats every 30 seconds
-        setInterval(updateStats, 30000);        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });        // Order action functions
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 768) {
+                closeSidebar();
+            }
+        });// Order action functions
         function viewOrder(orderId) {
             // Redirect to order detail page
             window.location.href = `order-detail.php?id=${orderId}`;
